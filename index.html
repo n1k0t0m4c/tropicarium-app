@@ -550,7 +550,8 @@
         async function initializeApp() {
             console.log('Initializing Content Pipeline Manager...');
             
-            const isApiConfigured = API_URL !== "https://script.google.com/macros/s/AKfycbwc0Zn8q8bhXlmPQo6ovOUhMjnvH3FIr5hfXV9N6bKYrgKL9p9PJD3PP_MjJb6R0nziSw/exec";
+            // POPRAVEK: Preverimo le, če je URL sploh vpisan ali če je ostal generičen tekst
+            const isApiConfigured = API_URL && API_URL.trim() !== "" && !API_URL.includes("TVOJ_URL_SEM");
             
             if (!isApiConfigured) {
                 console.warn('API_URL is not configured. Using mock data for demonstration.');
@@ -569,10 +570,22 @@
                     hideErrorState();
                 } catch (error) {
                     console.error('Failed to fetch from API:', error);
+                    appState.usesMockData = true;
                     loadMockData();
                     setTimeout(() => {
                         renderUI();
                         hideLoadingPage();
+                        
+                        // Dinamično spremenimo tekst, če gre za napako pri povezavi (CORS / Deployment)
+                        const errorBox = document.getElementById('errorState');
+                        if (errorBox) {
+                            errorBox.querySelector('h3').textContent = "Povezava z Google Sheets je spodletela";
+                            errorBox.querySelector('p').innerHTML = 
+                                "URL je nastavljen, vendar brskalnik ne more prejeti podatkov. <br>" +
+                                "1. Preveri, ali je Google Script objavljen kot <b>Web App</b>.<br>" +
+                                "2. Nastavitev 'Who has access' mora biti nastavljena na <b>Anyone</b>.<br>" +
+                                "3. Odpri konzolo (F12 -> Console) za natančen opis napake.";
+                        }
                         showErrorState();
                     }, 1500);
                 }
