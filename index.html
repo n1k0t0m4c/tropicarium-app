@@ -376,6 +376,7 @@
                     <p class="text-sm sm:text-base text-green-300/70 mt-1">Manage your content</p>
                 </div>
                 <div class="flex items-center gap-2 sm:gap-4">
+                    <button onclick="refreshData()" title="Refresh data from Google Sheets" class="text-xs sm:text-sm text-green-300/60 hover:text-green-300 transition px-3 py-1 border border-green-900/30 rounded hover:border-green-900/60 hover:bg-green-900/10">🔄</button>
                     <div id="syncStatus" class="text-xs sm:text-sm text-green-300/60"></div>
                 </div>
             </div>
@@ -548,68 +549,131 @@
         document.addEventListener('DOMContentLoaded', initializeApp);
 
         async function initializeApp() {
-            console.log('Initializing Content Pipeline Manager...');
-            
-            // POPRAVEK: Preverimo le, če je URL sploh vpisan ali če je ostal generičen tekst
-            const isApiConfigured = API_URL && API_URL.trim() !== "" && !API_URL.includes("TVOJ_URL_SEM");
-            
-            if (!isApiConfigured) {
-                console.warn('API_URL is not configured. Using mock data for demonstration.');
-                appState.usesMockData = true;
-                loadMockData();
-                setTimeout(() => {
-                    renderUI();
-                    hideLoadingPage();
-                    showErrorState();
-                }, 1500);
-            } else {
-                try {
-                    await fetchVideosFromAPI();
-                    renderUI();
-                    hideLoadingPage();
-                    hideErrorState();
-                } catch (error) {
-                    console.error('Failed to fetch from API:', error);
-                    appState.usesMockData = true;
-                    loadMockData();
-                    setTimeout(() => {
-                        renderUI();
-                        hideLoadingPage();
-                        
-                        // Dinamično spremenimo tekst, če gre za napako pri povezavi (CORS / Deployment)
-                        const errorBox = document.getElementById('errorState');
-                        if (errorBox) {
-                            errorBox.querySelector('h3').textContent = "Povezava z Google Sheets je spodletela";
-                            errorBox.querySelector('p').innerHTML = 
-                                "URL je nastavljen, vendar brskalnik ne more prejeti podatkov. <br>" +
-                                "1. Preveri, ali je Google Script objavljen kot <b>Web App</b>.<br>" +
-                                "2. Nastavitev 'Who has access' mora biti nastavljena na <b>Anyone</b>.<br>" +
-                                "3. Odpri konzolo (F12 -> Console) za natančen opis napake.";
-                        }
-                        showErrorState();
-                    }, 1500);
-                }
-            }
-        }
+             console.log('Initializing Content Pipeline Manager...');
+             console.log('API_URL:', API_URL);
+             
+             updateSyncStatus('Initializing...');
+             
+             // POPRAVEK: Preverimo le, če je URL sploh vpisan ali če je ostal generičen tekst
+             const isApiConfigured = API_URL && API_URL.trim() !== "" && !API_URL.includes("TVOJ_URL_SEM");
+             
+             if (!isApiConfigured) {
+                 console.warn('API_URL is not configured. Using mock data for demonstration.');
+                 appState.usesMockData = true;
+                 loadMockData();
+                 setTimeout(() => {
+                     renderUI();
+                     hideLoadingPage();
+                     showErrorState();
+                     updateSyncStatus('Not configured');
+                 }, 1500);
+             } else {
+                 try {
+                     console.log('Fetching videos from API...');
+                     await fetchVideosFromAPI();
+                     console.log('Successfully fetched videos:', appState.videos.length);
+                     renderUI();
+                     hideLoadingPage();
+                     hideErrorState();
+                     updateSyncStatus('Synced: ' + appState.videos.length + ' items');
+                 } catch (error) {
+                     console.error('Failed to fetch from API:', error);
+                     appState.usesMockData = true;
+                     loadMockData();
+                     setTimeout(() => {
+                         renderUI();
+                         hideLoadingPage();
+                         
+                         const errorBox = document.getElementById('errorState');
+                         if (errorBox) {
+                             errorBox.querySelector('h3').textContent = "Povezava z Google Sheets je spodletela";
+                             errorBox.querySelector('p').innerHTML = 
+                                 "URL je nastavljen, vendar brskalnik ne more prejeti podatkov. <br>" +
+                                 "1. Preveri, ali je Google Script objavljen kot <b>Web App</b>.<br>" +
+                                 "2. Nastavitev 'Who has access' mora biti nastavljena na <b>Anyone</b>.<br>" +
+                                 "3. Odpri konzolo (F12 -> Console) za natančen opis napake.";
+                         }
+                         showErrorState();
+                         updateSyncStatus('Connection failed');
+                     }, 1500);
+                 }
+             }
+         }
+
+         function updateSyncStatus(message) {
+             const syncStatus = document.getElementById('syncStatus');
+             if (syncStatus) {
+                 syncStatus.textContent = message;
+             }
+         }
+
+         async function refreshData() {
+             console.log('Manual refresh triggered');
+             updateSyncStatus('Refreshing...');
+             const contentArea = document.getElementById('contentArea');
+             contentArea.style.opacity = '0.5';
+             
+             try {
+                 await fetchVideosFromAPI();
+                 renderUI();
+                 updateSyncStatus('Synced: ' + appState.videos.length + ' items');
+                 console.log('Refresh successful');
+             } catch (error) {
+                 console.error('Refresh failed:', error);
+                 updateSyncStatus('Refresh failed - check console');
+             } finally {
+                 contentArea.style.opacity = '1';
+             }
+         }
 
         // ==================== API FUNCTIONS ====================
-        async function fetchVideosFromAPI() {
-            try {
-               const cacheBuster = API_URL.includes('?') ? `&_=${Date.now()}` : `?_=${Date.now()}`;
-               const response = await fetch(API_URL + cacheBuster);
+         async function fetchVideosFromAPI() {
+             try {
+                const cacheBuster = API_URL.includes('?') ? `&_=${Date.now()}` : `?_=${Date.now()}`;
+                const response = await fetch(API_URL + cacheBuster);
 
-                if (!response.ok) {
-                    throw new Error(`API error: ${response.status}`);
-                }
+                 if (!response.ok) {
+                     throw new Error(`API error: ${response.status}`);
+                 }
 
-                const data = await response.json();
-                appState.videos = Array.isArray(data) ? data : data.videos || [];
-                appState.isLoading = false;
-            } catch (error) {
-                console.error('API fetch failed:', error);
-                throw error;
-            }
-        }
+                 const responseText = await response.text();
+                 console.log('API Response:', responseText);
+
+                 let data;
+                 try {
+                     data = JSON.parse(responseText);
+                 } catch (parseError) {
+                     console.error('Failed to parse JSON response:', parseError);
+                     console.error('Response text was:', responseText);
+                     throw new Error('Invalid JSON response from API');
+                 }
+
+                 console.log('Parsed data:', data);
+                 console.log('Data type:', typeof data, 'Is array:', Array.isArray(data));
+
+                 let videos = [];
+                 if (Array.isArray(data)) {
+                     videos = data;
+                 } else if (data && typeof data === 'object') {
+                     if (data.videos && Array.isArray(data.videos)) {
+                         videos = data.videos;
+                     } else if (data.data && Array.isArray(data.data)) {
+                         videos = data.data;
+                     } else if (data.result && Array.isArray(data.result)) {
+                         videos = data.result;
+                     } else {
+                         console.warn('Could not find videos array in response object:', data);
+                         videos = [];
+                     }
+                 }
+
+                 appState.videos = videos.map(normalizeVideo);
+                 appState.isLoading = false;
+             } catch (error) {
+                 console.error('API fetch failed:', error);
+                 throw error;
+             }
+         }
 
         async function saveVideoToAPI(video) {
             if (appState.usesMockData) {
@@ -637,36 +701,42 @@
             }
         }
 
-        async function deleteVideo(id) {
-            // 1. The "Are you sure?" Popup
-            if (!confirm("Are you sure you want to delete this idea? This cannot be undone.")) {
-                return; 
-            }
+         async function deleteVideo(id) {
+             // 1. The "Are you sure?" Popup
+             if (!confirm("Are you sure you want to delete this idea? This cannot be undone.")) {
+                 return; 
+             }
 
-            // 2. Make the card look faded while deleting
-            const cardElement = document.getElementById('card-' + id);
-            if (cardElement) cardElement.style.opacity = '0.5';
+             // 2. Make the card look faded while deleting
+             const cardElement = document.getElementById('card-' + id);
+             if (cardElement) cardElement.style.opacity = '0.5';
 
-            try {
-                // 3. Tell Google Sheets to delete it
-                const response = await fetch(API_URL, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'text/plain;charset=utf-8' },
-                    body: JSON.stringify({ action: 'delete', id: id })
-                });
+             try {
+                 // 3. Tell Google Sheets to delete it
+                 const response = await fetch(API_URL, {
+                     method: 'POST',
+                     headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+                     body: JSON.stringify({ action: 'delete', id: id })
+                 });
 
-                if (!response.ok) throw new Error("Delete failed");
+                 if (!response.ok) throw new Error("Delete failed");
 
-                // 4. Remove it from the local screen and refresh the UI
-                appState.videos = appState.videos.filter(v => v.id !== id);
-                renderUI();
+                 // 4. Remove it from the local screen and refresh the UI
+                 appState.videos = appState.videos.filter(v => v.id !== id);
+                 renderUI();
+                 updateSyncStatus('Deleted ✓');
+                 
+                 setTimeout(() => {
+                     console.log('Auto-refreshing data after delete...');
+                     refreshData();
+                 }, 500);
 
-            } catch (error) {
-                console.error('Failed to delete:', error);
-                alert('Failed to delete the video. Please try again.');
-                if (cardElement) cardElement.style.opacity = '1';
-            }
-        }
+             } catch (error) {
+                 console.error('Failed to delete:', error);
+                 alert('Failed to delete the video. Please try again.');
+                 if (cardElement) cardElement.style.opacity = '1';
+             }
+         }
         // ==================== MOCK DATA ====================
         function loadMockData() {
             const now = new Date();
@@ -728,13 +798,37 @@
         }
 
         // ==================== UTILITY FUNCTIONS ====================
-        function getMonthName(monthIndex) {
-            const monthNames = ['January', 'February', 'March', 'April', 'May', 'June',
-                              'July', 'August', 'September', 'October', 'November', 'December'];
-            return monthNames[monthIndex % 12];
-        }
+         function getMonthName(monthIndex) {
+             const monthNames = ['January', 'February', 'March', 'April', 'May', 'June',
+                               'July', 'August', 'September', 'October', 'November', 'December'];
+             return monthNames[monthIndex % 12];
+         }
 
-        function getUpcomingMonths(count = 4) {
+         function formatMonthValue(monthValue) {
+             if (!monthValue) return '';
+             if (typeof monthValue === 'string' && /^[A-Za-z]+\s+\d{4}$/.test(monthValue.trim())) {
+                 return monthValue.trim();
+             }
+
+             const date = new Date(monthValue);
+             if (!Number.isNaN(date.getTime())) {
+                 date.setHours(date.getHours() + 12);
+                 return getMonthName(date.getMonth()) + ' ' + date.getFullYear();
+             }
+
+             return String(monthValue).trim();
+         }
+
+         function normalizeVideo(video) {
+             return {
+                 ...video,
+                 month: formatMonthValue(video.month),
+                 type: String(video.type || '').trim(),
+                 stars: parseInt(video.stars) || 1
+             };
+         }
+
+         function getUpcomingMonths(count = 4) {
             const months = [];
             const now = new Date();
             
@@ -759,7 +853,7 @@
         }
 
         function getVideosByMonth(monthDisplay) {
-            return appState.videos.filter(v => v.month === monthDisplay);
+            return appState.videos.filter(v => formatMonthValue(v.month) === monthDisplay);
         }
 
         function getStarColor(stars) {
@@ -791,23 +885,23 @@
             return null;
         }
 
-        // ==================== UI RENDERING ====================
-        function renderUI() {
-            const contentArea = document.getElementById('contentArea');
-            const loadingState = document.getElementById('loadingState');
-            
-            loadingState.classList.add('hidden');
-            contentArea.classList.remove('hidden');
+         // ==================== UI RENDERING ====================
+         function renderUI() {
+             const contentArea = document.getElementById('contentArea');
+             const loadingState = document.getElementById('loadingState');
+             
+             loadingState.classList.add('hidden');
+             contentArea.classList.remove('hidden');
 
-            const months = getUpcomingMonths(4);
-            contentArea.innerHTML = '';
+             const months = getUpcomingMonths(4);
+             contentArea.innerHTML = '';
 
-            months.forEach(month => {
-                const monthDisplay = month.display;
-                const monthVideos = getVideosByMonth(monthDisplay);
-                const longCount = getCountByType(monthVideos, 'Long');
-                const shortCount = getCountByType(monthVideos, 'Short');
-                const isExpanded = appState.expandedMonths[monthDisplay] || false;
+             months.forEach(month => {
+                 const monthDisplay = month.display;
+                 const monthVideos = getVideosByMonth(monthDisplay);
+                 const longCount = getCountByType(monthVideos, 'Long');
+                 const shortCount = getCountByType(monthVideos, 'Short');
+                 const isExpanded = appState.expandedMonths[monthDisplay] || false;
 
                 const monthSection = document.createElement('div');
                 monthSection.className = 'bg-gradient-to-b from-[#0d1b2a] to-[#0a2a2a] rounded-xl border border-green-900/30 shadow-lg overflow-hidden glow-box';
@@ -1075,47 +1169,56 @@
             });
         }
 
-        // ==================== FORM SUBMISSION ====================
-        document.getElementById('videoForm').addEventListener('submit', async (e) => {
-            e.preventDefault();
+         // ==================== FORM SUBMISSION ====================
+         document.getElementById('videoForm').addEventListener('submit', async (e) => {
+             e.preventDefault();
 
-            if (appState.isSaving) return;
+             if (appState.isSaving) return;
 
-            appState.isSaving = true;
-            const submitBtn = document.getElementById('submitBtn');
-            const originalText = submitBtn.textContent;
-            submitBtn.textContent = 'Saving...';
-            submitBtn.disabled = true;
+             appState.isSaving = true;
+             const submitBtn = document.getElementById('submitBtn');
+             const originalText = submitBtn.textContent;
+             submitBtn.textContent = 'Saving...';
+             submitBtn.disabled = true;
 
-            const newVideo = {
-                id: 'video_' + Date.now(),
-                title: document.getElementById('formTitle').value,
-                type: document.getElementById('formType').checked ? 'Long' : 'Short',
-                month: document.getElementById('formMonth').value,
-                link: document.getElementById('formLink').value,
-                driveLink: document.getElementById('formDriveLink').value,
-                caption: document.getElementById('formCaption').value,
-                script: document.getElementById('formScript').value,
-                stars: parseInt(document.getElementById('formStars').value),
-                createdAt: new Date().toISOString()
-            };
+             const newVideo = {
+                 id: 'video_' + Date.now(),
+                 title: document.getElementById('formTitle').value,
+                 type: document.getElementById('formType').checked ? 'Long' : 'Short',
+                 month: document.getElementById('formMonth').value,
+                 link: document.getElementById('formLink').value,
+                 driveLink: document.getElementById('formDriveLink').value,
+                 caption: document.getElementById('formCaption').value,
+                 script: document.getElementById('formScript').value,
+                 stars: parseInt(document.getElementById('formStars').value),
+                 createdAt: new Date().toISOString()
+             };
 
-            const saved = await saveVideoToAPI(newVideo);
+             const saved = await saveVideoToAPI(newVideo);
 
-            if (saved) {
-                appState.videos.push(newVideo);
-                renderUI();
-                closeVideoModal();
-                submitBtn.textContent = originalText;
-                submitBtn.disabled = false;
-                appState.isSaving = false;
-            } else {
-                submitBtn.textContent = originalText;
-                submitBtn.disabled = false;
-                appState.isSaving = false;
-                alert('Failed to save video. Please try again.');
-            }
-        });
+             if (saved) {
+                 appState.videos.push(newVideo);
+                 renderUI();
+                 closeVideoModal();
+                 submitBtn.textContent = originalText;
+                 submitBtn.disabled = false;
+                 appState.isSaving = false;
+                 updateSyncStatus('Saved ✓');
+                 setTimeout(() => {
+                     updateSyncStatus('Synced: ' + appState.videos.length + ' items');
+                 }, 2000);
+                 
+                 setTimeout(() => {
+                     console.log('Auto-refreshing data to verify save...');
+                     refreshData();
+                 }, 500);
+             } else {
+                 submitBtn.textContent = originalText;
+                 submitBtn.disabled = false;
+                 appState.isSaving = false;
+                 alert('Failed to save video. Please try again.');
+             }
+         });
 
         // ==================== ERROR HANDLING ====================
         function showErrorState() {
