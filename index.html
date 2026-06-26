@@ -595,8 +595,8 @@
         // ==================== API FUNCTIONS ====================
         async function fetchVideosFromAPI() {
             try {
-                // The "?t=" + Date.now() forces the browser to fetch fresh data every time
-                const response = await fetch(API_URL + "?t=" + Date.now());
+               const cacheBuster = API_URL.includes('?') ? `&_=${Date.now()}` : `?_=${Date.now()}`;
+               const response = await fetch(API_URL + cacheBuster);
 
                 if (!response.ok) {
                     throw new Error(`API error: ${response.status}`);
