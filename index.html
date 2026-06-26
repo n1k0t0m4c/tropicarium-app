@@ -162,22 +162,61 @@
         }
 
         .collapsible-content {
-            max-height: 0;
+            height: 0;
             overflow: hidden;
             opacity: 0;
             transform: translateY(-10px) scale(0.985);
-            transition: max-height 0.75s cubic-bezier(0.22, 1, 0.36, 1), opacity 0.5s ease, transform 0.65s cubic-bezier(0.22, 1, 0.36, 1);
+            will-change: height, opacity, transform;
         }
 
         .collapsible-content.open {
-            max-height: 2400px;
             opacity: 1;
             transform: translateY(0) scale(1);
+            /* height is managed by JS for pixel-perfect animation */
         }
 
         .modal-overlay {
             backdrop-filter: blur(8px);
             background-color: rgba(2, 4, 3, 0.7);
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity 0.35s ease;
+        }
+
+        .modal-overlay.modal-visible {
+            opacity: 1;
+            pointer-events: auto;
+        }
+
+        /* The inner dialog panel — animated independently of the backdrop */
+        .modal-panel {
+            transform: scale(0.92) translateY(24px);
+            opacity: 0;
+            transition:
+                transform 0.55s cubic-bezier(0.16, 1, 0.3, 1),
+                opacity    0.4s  cubic-bezier(0.16, 1, 0.3, 1);
+            will-change: transform, opacity;
+        }
+
+        .modal-overlay.modal-visible .modal-panel {
+            transform: scale(1) translateY(0);
+            opacity: 1;
+        }
+
+        /* Closing: snappier, slightly different collapse point */
+        .modal-overlay.modal-closing .modal-panel {
+            transform: scale(0.96) translateY(12px);
+            opacity: 0;
+            transition:
+                transform 0.26s cubic-bezier(0.4, 0, 0.8, 1),
+                opacity    0.2s  ease;
+        }
+
+        /* Sticky modal header must sit above toggle/form content */
+        .modal-sticky-header {
+            position: sticky;
+            top: 0;
+            z-index: 10;
         }
 
         .modal-content {
@@ -481,9 +520,9 @@
 
     <!-- Add Video Modal -->
     <div id="videoModal" class="hidden fixed inset-0 z-50 flex items-center justify-center modal-overlay">
-        <div class="bg-gradient-to-b from-[#020403] to-[#071107] rounded-lg shadow-2xl w-full mx-4 max-w-2xl modal-content border border-green-900/30 glow-box">
+        <div class="bg-gradient-to-b from-[#020403] to-[#071107] rounded-lg shadow-2xl w-full mx-4 max-w-2xl modal-content modal-panel border border-green-900/30 glow-box">
             <!-- Modal Header -->
-            <div class="border-b border-green-900/30 p-4 sm:p-6 flex justify-between items-center sticky top-0 bg-gradient-to-r from-[#020403] to-[#071107] rounded-t-lg">
+            <div class="modal-sticky-header border-b border-green-900/30 p-4 sm:p-6 flex justify-between items-center bg-gradient-to-r from-[#020403] to-[#071107] rounded-t-lg">
                 <h2 class="text-xl sm:text-2xl font-bold text-green-400 glow-text">Add New Video Idea</h2>
                 <button onclick="closeVideoModal()" class="text-green-400/60 hover:text-green-300 text-3xl font-light transition">×</button>
             </div>
@@ -1108,6 +1147,12 @@
                 monthSection.appendChild(header);
                 monthSection.appendChild(contentContainer);
                 contentArea.appendChild(monthSection);
+
+                // If already expanded (e.g. after refresh), set height to auto immediately
+                // so the section renders open without an unwanted opening animation
+                if (isExpanded) {
+                    contentContainer.style.height = 'auto';
+                }
             });
         }
        
@@ -1275,14 +1320,77 @@
             }
         }
 
+        // ==================== SMOOTH COLLAPSIBLE ANIMATION ====================
+        // Uses precise JS-measured pixel heights so both directions take the same
+        // real time, with tailored easings: expo-out for opening, smooth-in for closing.
+
+        function animateOpen(content) {
+            // 1. Disable transition, measure natural height
+            content.style.transition = 'none';
+            content.style.height = 'auto';
+            const targetHeight = content.scrollHeight;
+            content.style.height = '0px';
+
+            // 2. Force layout so browser commits the 0px start
+            void content.offsetHeight;
+
+            // 3. Apply opening transitions (Expo-out: starts fast, decelerates elegantly)
+            content.style.transition = [
+                'height 0.65s cubic-bezier(0.16, 1, 0.3, 1)',
+                'opacity 0.5s cubic-bezier(0.16, 1, 0.3, 1)',
+                'transform 0.6s cubic-bezier(0.16, 1, 0.3, 1)'
+            ].join(', ');
+
+            // 4. Animate to real content height
+            content.style.height = targetHeight + 'px';
+            content.classList.add('open');
+
+            // 5. After height animation, switch to 'auto' so content can grow freely
+            function onEnd(e) {
+                if (e.propertyName === 'height' && e.target === content) {
+                    content.style.height = 'auto';
+                    content.removeEventListener('transitionend', onEnd);
+                }
+            }
+            content.addEventListener('transitionend', onEnd);
+        }
+
+        function animateClose(content) {
+            // 1. Capture current rendered height (works even if height is 'auto')
+            const currentHeight = content.offsetHeight;
+
+            // 2. Pin it as an explicit px value so transition has a defined start
+            content.style.transition = 'none';
+            content.style.height = currentHeight + 'px';
+
+            // 3. Force layout
+            void content.offsetHeight;
+
+            // 4. Apply closing transitions (ease-in: starts smooth, ends crisply)
+            content.style.transition = [
+                'height 0.48s cubic-bezier(0.4, 0, 0.2, 1)',
+                'opacity 0.3s cubic-bezier(0.4, 0, 1, 1)',
+                'transform 0.42s cubic-bezier(0.4, 0, 0.2, 1)'
+            ].join(', ');
+
+            // 5. Animate to zero
+            content.style.height = '0px';
+            content.classList.remove('open');
+        }
+
         function toggleCollapsible(e, element) {
             e.preventDefault();
             e.stopPropagation();
             const content = element.querySelector('.collapsible-content');
             const icon = element.querySelector('span:last-child');
 
-            content.classList.toggle('open');
-            icon.textContent = content.classList.contains('open') ? '▲' : '▼';
+            if (content.classList.contains('open')) {
+                animateClose(content);
+                icon.textContent = '▼';
+            } else {
+                animateOpen(content);
+                icon.textContent = '▲';
+            }
         }
 
         function toggleMonth(monthDisplay, monthSection) {
@@ -1292,8 +1400,13 @@
             const content = monthSection.querySelector('.collapsible-content');
             const icon = monthSection.querySelector('.toggle-icon');
 
-            content.classList.toggle('open');
-            icon.classList.toggle('open');
+            if (isExpanded) {
+                animateClose(content);
+                icon.classList.remove('open');
+            } else {
+                animateOpen(content);
+                icon.classList.add('open');
+            }
         }
 
         // ==================== MODAL FUNCTIONS ====================
@@ -1306,14 +1419,34 @@
             updateTypeLabel();
             updateStarDescription();
 
-            document.getElementById('videoModal').classList.remove('hidden');
+            const modal = document.getElementById('videoModal');
+            modal.classList.remove('hidden', 'modal-closing');
             document.body.style.overflow = 'hidden';
+
+            // Two rAFs: first lets display:flex paint at opacity 0,
+            // second triggers the CSS transition into modal-visible
+            requestAnimationFrame(() => {
+                requestAnimationFrame(() => {
+                    modal.classList.add('modal-visible');
+                });
+            });
         }
 
         function closeVideoModal() {
-            document.getElementById('videoModal').classList.add('hidden');
+            const modal = document.getElementById('videoModal');
+            // Ignore if already closing or hidden
+            if (!modal.classList.contains('modal-visible')) return;
+
+            modal.classList.add('modal-closing');
+            modal.classList.remove('modal-visible');
             document.body.style.overflow = '';
             document.getElementById('videoForm').reset();
+
+            // Wait for closing animation (longest property: 260ms) then fully hide
+            setTimeout(() => {
+                modal.classList.add('hidden');
+                modal.classList.remove('modal-closing');
+            }, 300);
         }
 
         function updateTypeLabel() {
