@@ -1,0 +1,454 @@
+* {
+    font-family: 'Poppins', sans-serif;
+}
+
+body {
+    background: linear-gradient(135deg, #020403 0%, #050805 50%, #06120a 100%);
+    min-height: 100vh;
+    overflow-x: hidden;
+}
+
+h1, h2, h3, h4, h5, h6 {
+    font-family: 'Playfair Display', serif;
+}
+
+.glow-text {
+    text-shadow: 0 0 20px rgba(34, 197, 94, 0.6), 0 0 40px rgba(34, 197, 94, 0.3);
+}
+
+.glow-box {
+    box-shadow: 0 18px 55px rgba(34, 197, 94, 0.16), 0 0 0 1px rgba(34, 197, 94, 0.14), inset 0 1px 0 rgba(187, 247, 208, 0.08), inset 0 -24px 70px rgba(34, 197, 94, 0.07);
+}
+
+.glow-hover:hover {
+    box-shadow: 0 22px 65px rgba(34, 197, 94, 0.24), 0 0 0 1px rgba(34, 197, 94, 0.28), inset 0 1px 0 rgba(187, 247, 208, 0.12), inset 0 -28px 80px rgba(34, 197, 94, 0.1);
+    transform: translateY(-2px);
+}
+
+.loading-page {
+    position: fixed;
+    inset: 0;
+    background: linear-gradient(135deg, #020403 0%, #050805 50%, #06120a 100%);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 999;
+    flex-direction: column;
+    gap: 40px;
+}
+
+.loading-page.zoom-out {
+    animation: loading-zoom-out 0.7s cubic-bezier(0.22, 1, 0.36, 1) forwards;
+}
+
+#appShell {
+    transform: scale(0.96);
+    opacity: 0;
+    transition: transform 0.7s cubic-bezier(0.22, 1, 0.36, 1), opacity 0.7s ease;
+}
+
+#appShell.app-visible {
+    transform: scale(1);
+    opacity: 1;
+}
+
+@keyframes loading-zoom-out {
+    0% {
+        opacity: 1;
+        transform: scale(1);
+    }
+    100% {
+        opacity: 0;
+        transform: scale(1.08);
+    }
+}
+
+.tropicarium-title {
+    font-size: 4rem;
+    font-weight: 800;
+    letter-spacing: 8px;
+    color: #22c55e;
+    text-shadow: 0 0 30px rgba(34, 197, 94, 0.8), 0 0 60px rgba(34, 197, 94, 0.4);
+    animation: glow-pulse 2s ease-in-out infinite;
+    font-family: 'Playfair Display', serif;
+}
+
+@keyframes glow-pulse {
+    0%, 100% {
+        text-shadow: 0 0 30px rgba(34, 197, 94, 0.8), 0 0 60px rgba(34, 197, 94, 0.4);
+    }
+    50% {
+        text-shadow: 0 0 50px rgba(34, 197, 94, 1), 0 0 80px rgba(34, 197, 94, 0.6);
+    }
+}
+
+.swipe-loader {
+    width: 300px;
+    height: 4px;
+    background: rgba(34, 197, 94, 0.2);
+    border-radius: 2px;
+    overflow: hidden;
+    position: relative;
+}
+
+.swipe-loader::after {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    height: 100%;
+    width: 30%;
+    background: linear-gradient(90deg, transparent, #22c55e, transparent);
+    animation: swipe 1.5s infinite;
+    box-shadow: 0 0 15px rgba(34, 197, 94, 0.8);
+}
+
+@keyframes swipe {
+    0% { left: -30%; }
+    100% { left: 100%; }
+}
+
+.star {
+    display: inline-block;
+    color: #10b981;
+    font-size: 1.25rem;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    text-shadow: 0 0 10px rgba(16, 185, 129, 0.5);
+}
+
+.star:hover {
+    transform: scale(1.2);
+    text-shadow: 0 0 20px rgba(16, 185, 129, 0.8);
+}
+
+.star.empty {
+    color: #1e3a3a;
+    text-shadow: none;
+}
+
+.collapsible-header {
+    cursor: pointer;
+    user-select: none;
+    transition: background 0.45s ease, box-shadow 0.45s ease, transform 0.45s cubic-bezier(0.22, 1, 0.36, 1);
+    border-radius: 12px;
+}
+
+.collapsible-header:hover {
+    background: rgba(34, 197, 94, 0.08);
+    box-shadow: inset 0 0 35px rgba(34, 197, 94, 0.08), 0 10px 35px rgba(34, 197, 94, 0.08);
+    transform: translateY(-1px);
+}
+
+.toggle-icon {
+    transition: transform 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
+    display: inline-block;
+    font-size: 1rem;
+    color: #22c55e;
+    text-shadow: 0 0 10px rgba(34, 197, 94, 0.5);
+}
+
+.toggle-icon.open {
+    transform: rotate(180deg);
+}
+
+.collapsible-content {
+    height: 0;
+    overflow: hidden;
+    opacity: 0;
+    transform: translateY(-10px) scale(0.985);
+    will-change: height, opacity, transform;
+}
+
+.collapsible-content.open {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+    /* height is managed by JS for pixel-perfect animation */
+}
+
+.modal-overlay {
+    backdrop-filter: blur(8px);
+    background-color: rgba(2, 4, 3, 0.7);
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.35s ease;
+}
+
+.modal-overlay.modal-visible {
+    opacity: 1;
+    pointer-events: auto;
+}
+
+/* The inner dialog panel — animated independently of the backdrop */
+.modal-panel {
+    transform: scale(0.92) translateY(24px);
+    opacity: 0;
+    transition:
+        transform 0.55s cubic-bezier(0.16, 1, 0.3, 1),
+        opacity    0.4s  cubic-bezier(0.16, 1, 0.3, 1);
+    will-change: transform, opacity;
+}
+
+.modal-overlay.modal-visible .modal-panel {
+    transform: scale(1) translateY(0);
+    opacity: 1;
+}
+
+/* Closing: snappier, slightly different collapse point */
+.modal-overlay.modal-closing .modal-panel {
+    transform: scale(0.96) translateY(12px);
+    opacity: 0;
+    transition:
+        transform 0.26s cubic-bezier(0.4, 0, 0.8, 1),
+        opacity    0.2s  ease;
+}
+
+/* Sticky modal header must sit above toggle/form content */
+.modal-sticky-header {
+    position: sticky;
+    top: 0;
+    z-index: 10;
+}
+
+.modal-content {
+    max-height: 85vh;
+    overflow-y: auto;
+    scrollbar-width: thin;
+    scrollbar-color: rgba(34, 197, 94, 0.3) rgba(2, 8, 4, 0.72);
+}
+
+.modal-content::-webkit-scrollbar {
+    width: 8px;
+}
+
+.modal-content::-webkit-scrollbar-track {
+    background: rgba(2, 8, 4, 0.72);
+    border-radius: 4px;
+}
+
+.modal-content::-webkit-scrollbar-thumb {
+    background: rgba(34, 197, 94, 0.3);
+    border-radius: 4px;
+}
+
+.modal-content::-webkit-scrollbar-thumb:hover {
+    background: rgba(34, 197, 94, 0.5);
+}
+
+.type-toggle-container {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 12px;
+    border: 2px solid rgba(34, 197, 94, 0.3);
+    border-radius: 10px;
+    background: rgba(34, 197, 94, 0.05);
+    transition: all 0.3s ease;
+}
+
+.type-label {
+    font-size: 0.875rem;
+    font-weight: 600;
+    color: #a3e635;
+    min-width: 45px;
+    transition: all 0.3s ease;
+}
+
+.type-label.active {
+    color: #22c55e;
+    font-weight: 700;
+    text-shadow: 0 0 10px rgba(34, 197, 94, 0.6);
+}
+
+.toggle-switch {
+    position: relative;
+    display: inline-block;
+    width: 64px;
+    height: 32px;
+    flex-shrink: 0;
+}
+
+.toggle-switch input {
+    opacity: 0;
+    width: 0;
+    height: 0;
+}
+
+.toggle-slider {
+    position: absolute;
+    cursor: pointer;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background-color: rgba(34, 197, 94, 0.2);
+    transition: background-color 0.4s ease;
+    border-radius: 32px;
+    border: 1px solid rgba(34, 197, 94, 0.3);
+}
+
+.toggle-slider:before {
+    position: absolute;
+    content: "";
+    height: 28px;
+    width: 28px;
+    left: 2px;
+    bottom: 2px;
+    background-color: #22c55e;
+    transition: transform 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
+    border-radius: 50%;
+    box-shadow: 0 0 15px rgba(34, 197, 94, 0.5);
+}
+
+input:checked + .toggle-slider {
+    background-color: rgba(34, 197, 94, 0.3);
+    border-color: rgba(34, 197, 94, 0.6);
+}
+
+input:checked + .toggle-slider:before {
+    transform: translateX(32px);
+}
+
+.btn-add {
+    min-height: 44px;
+    min-width: 44px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+textarea {
+    resize: vertical;
+    font-family: 'Poppins', sans-serif;
+    background-color: rgba(2, 8, 4, 0.72) !important;
+    border: 1px solid rgba(34, 197, 94, 0.2) !important;
+    color: #e5e7eb !important;
+}
+
+textarea:focus {
+    border-color: rgba(34, 197, 94, 0.5) !important;
+    box-shadow: 0 0 20px rgba(34, 197, 94, 0.3) !important;
+}
+
+input[type="text"],
+input[type="url"] {
+    background-color: rgba(2, 8, 4, 0.72) !important;
+    border: 1px solid rgba(34, 197, 94, 0.2) !important;
+    color: #e5e7eb !important;
+}
+
+input[type="text"]:focus,
+input[type="url"]:focus {
+    border-color: rgba(34, 197, 94, 0.5) !important;
+    box-shadow: 0 0 20px rgba(34, 197, 94, 0.3) !important;
+}
+
+input::placeholder {
+    color: rgba(229, 231, 235, 0.5) !important;
+}
+
+.card-title {
+    word-break: break-word;
+    overflow-wrap: break-word;
+}
+
+.floating-tab {
+    position: relative;
+    display: inline-block;
+    padding: 8px 16px;
+    border-radius: 20px;
+    border: 1px solid rgba(34, 197, 94, 0.4);
+    background: rgba(2, 8, 4, 0.9);
+    color: #22c55e;
+    font-weight: 600;
+    font-size: 0.875rem;
+    transition: all 0.3s ease;
+    cursor: pointer;
+    box-shadow: 0 0 20px rgba(34, 197, 94, 0.2);
+}
+
+.floating-tab:hover {
+    border-color: rgba(34, 197, 94, 0.8);
+    box-shadow: 0 0 30px rgba(34, 197, 94, 0.4);
+    transform: translateY(-2px);
+    background: rgba(34, 197, 94, 0.1);
+}
+
+.floating-tab.active {
+    background: rgba(34, 197, 94, 0.2);
+    border-color: rgba(34, 197, 94, 0.8);
+    box-shadow: 0 0 40px rgba(34, 197, 94, 0.6);
+}
+
+.app-header {
+    background: linear-gradient(180deg, rgba(0, 0, 0, 0.98) 0%, rgba(3, 15, 6, 0.96) 52%, rgba(0, 0, 0, 0.98) 100%);
+    box-shadow: 0 18px 60px rgba(0, 0, 0, 0.62), 0 10px 55px rgba(34, 197, 94, 0.14), inset 0 -1px 0 rgba(34, 197, 94, 0.2), inset 0 1px 0 rgba(187, 247, 208, 0.08);
+    backdrop-filter: blur(18px);
+}
+
+.app-header::after {
+    content: '';
+    position: absolute;
+    left: 8%;
+    right: 8%;
+    bottom: -1px;
+    height: 2px;
+    background: linear-gradient(90deg, transparent, rgba(34, 197, 94, 0.28), rgba(163, 230, 53, 0.48), rgba(34, 197, 94, 0.28), transparent);
+    filter: blur(0.5px);
+}
+
+.refresh-overlay {
+    position: fixed;
+    inset: 0;
+    z-index: 80;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-direction: column;
+    gap: 34px;
+    pointer-events: none;
+    opacity: 0;
+    transform: scale(0.96);
+    transition: opacity 0.35s ease, transform 0.55s cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+.refresh-overlay.active {
+    opacity: 1;
+    transform: scale(1);
+}
+
+.refresh-overlay.finishing {
+    opacity: 0;
+    transform: scale(1.08);
+}
+
+.refresh-overlay .tropicarium-title {
+    font-size: 3rem;
+    background: rgba(0, 0, 0, 0.28);
+    border-radius: 24px;
+    padding: 8px 28px;
+    backdrop-filter: blur(2px);
+}
+
+.editable-field {
+    background: rgba(2, 8, 4, 0.64);
+    border: 1px solid rgba(34, 197, 94, 0.22);
+    border-radius: 12px;
+    min-height: 110px;
+}
+
+.editable-field:focus {
+    border-color: rgba(34, 197, 94, 0.55);
+    box-shadow: 0 0 24px rgba(34, 197, 94, 0.18);
+}
+
+@media (max-width: 768px) {
+    .tropicarium-title {
+        font-size: 2.5rem;
+        letter-spacing: 4px;
+    }
+
+    .swipe-loader {
+        width: 200px;
+    }
+}
