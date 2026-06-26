@@ -550,7 +550,7 @@
         async function initializeApp() {
             console.log('Initializing Content Pipeline Manager...');
             
-            const isApiConfigured = API_URL !== "YOUR_GOOGLE_SHEETS_API_URL_HERE";
+            const isApiConfigured = API_URL !== "https://script.google.com/macros/s/AKfycbwc0Zn8q8bhXlmPQo6ovOUhMjnvH3FIr5hfXV9N6bKYrgKL9p9PJD3PP_MjJb6R0nziSw/exec";
             
             if (!isApiConfigured) {
                 console.warn('API_URL is not configured. Using mock data for demonstration.');
@@ -582,8 +582,8 @@
         // ==================== API FUNCTIONS ====================
         async function fetchVideosFromAPI() {
             try {
-                // Removed the headers entirely so it sends a simple GET request
-                const response = await fetch(API_URL);
+                // The "?t=" + Date.now() forces the browser to fetch fresh data every time
+                const response = await fetch(API_URL + "?t=" + Date.now());
 
                 if (!response.ok) {
                     throw new Error(`API error: ${response.status}`);
@@ -624,6 +624,36 @@
             }
         }
 
+        async function deleteVideo(id) {
+            // 1. The "Are you sure?" Popup
+            if (!confirm("Are you sure you want to delete this idea? This cannot be undone.")) {
+                return; 
+            }
+
+            // 2. Make the card look faded while deleting
+            const cardElement = document.getElementById('card-' + id);
+            if (cardElement) cardElement.style.opacity = '0.5';
+
+            try {
+                // 3. Tell Google Sheets to delete it
+                const response = await fetch(API_URL, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+                    body: JSON.stringify({ action: 'delete', id: id })
+                });
+
+                if (!response.ok) throw new Error("Delete failed");
+
+                // 4. Remove it from the local screen and refresh the UI
+                appState.videos = appState.videos.filter(v => v.id !== id);
+                renderUI();
+
+            } catch (error) {
+                console.error('Failed to delete:', error);
+                alert('Failed to delete the video. Please try again.');
+                if (cardElement) cardElement.style.opacity = '1';
+            }
+        }
         // ==================== MOCK DATA ====================
         function loadMockData() {
             const now = new Date();
@@ -834,14 +864,24 @@
                 contentArea.appendChild(monthSection);
             });
         }
+        // Add ID to the card so we can target it for the fading animation
+            card.id = 'card-' + video.id;
 
+            // Create a top row container for the Title + Delete button
+            const topRow = document.createElement('div');
+            topRow.className = 'flex justify-between items-start mb-2 gap-2';
+
+            const deleteBtn = document.createElement('button');
+            deleteBtn.innerHTML = '🗑️';
+            deleteBtn.className = 'text-red-400/70 hover:text-red-400 transition bg-red-900/20 hover:bg-red-900/40 rounded p-1.5 text-xs';
+            deleteBtn.onclick = () => deleteVideo(video.id);
         function createVideoCard(video) {
             const card = document.createElement('div');
             card.className = 'bg-gradient-to-b from-[#0d1b2a] to-[#0a2a2a] rounded-xl border border-green-900/30 p-4 sm:p-5 hover:shadow-lg transition glow-hover';
             card.style.boxShadow = '0 0 20px rgba(34, 197, 94, 0.15)';
 
             const titleEl = document.createElement('h3');
-            titleEl.className = 'font-bold text-sm sm:text-base text-green-400 card-title mb-2 line-clamp-2 glow-text';
+            titleEl.className = 'font-bold text-sm sm:text-base text-green-400 card-title line-clamp-2 glow-text';
             titleEl.textContent = video.title;
 
             const badgesContainer = document.createElement('div');
@@ -929,7 +969,9 @@
             script.appendChild(scriptHeader);
             script.appendChild(scriptContent);
 
-            card.appendChild(titleEl);
+            topRow.appendChild(titleEl);
+            topRow.appendChild(deleteBtn);
+            card.appendChild(topRow);            
             card.appendChild(badgesContainer);
             card.appendChild(starsLabel);
             if (driveVideoSection) {
