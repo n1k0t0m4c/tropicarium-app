@@ -582,15 +582,11 @@
         // ==================== API FUNCTIONS ====================
         async function fetchVideosFromAPI() {
             try {
-                const response = await fetch(API_URL, {
-                    method: 'GET',
-                    headers: {
-                        'Content-Type': 'text/plain;charset=utf-8',
-                    }
-                });
+                // Removed the headers entirely so it sends a simple GET request
+                const response = await fetch(API_URL);
 
                 if (!response.ok) {
-                    throw new Error(`API error: ${response.statusCode}`);
+                    throw new Error(`API error: ${response.status}`);
                 }
 
                 const data = await response.json();
@@ -611,13 +607,14 @@
                 const response = await fetch(API_URL, {
                     method: 'POST',
                     headers: {
-                        'Content-Type': 'application/json',
+                        // This exact string tricks the browser into skipping the OPTIONS preflight
+                        'Content-Type': 'text/plain;charset=utf-8',
                     },
                     body: JSON.stringify(video)
                 });
 
                 if (!response.ok) {
-                    throw new Error(`API error: ${response.statusCode}`);
+                    throw new Error(`API error: ${response.status}`);
                 }
 
                 return true;
