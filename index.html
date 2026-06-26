@@ -12,7 +12,7 @@
         }
 
         body {
-            background: linear-gradient(135deg, #0a0e27 0%, #0d1b2a 50%, #0a3d3a 100%);
+            background: linear-gradient(135deg, #020403 0%, #050805 50%, #06120a 100%);
             min-height: 100vh;
             overflow-x: hidden;
         }
@@ -26,17 +26,18 @@
         }
 
         .glow-box {
-            box-shadow: 0 0 30px rgba(34, 197, 94, 0.3), inset 0 0 20px rgba(34, 197, 94, 0.1);
+            box-shadow: 0 18px 55px rgba(34, 197, 94, 0.16), 0 0 0 1px rgba(34, 197, 94, 0.14), inset 0 1px 0 rgba(187, 247, 208, 0.08), inset 0 -24px 70px rgba(34, 197, 94, 0.07);
         }
 
         .glow-hover:hover {
-            box-shadow: 0 0 40px rgba(34, 197, 94, 0.5), inset 0 0 30px rgba(34, 197, 94, 0.15);
+            box-shadow: 0 22px 65px rgba(34, 197, 94, 0.24), 0 0 0 1px rgba(34, 197, 94, 0.28), inset 0 1px 0 rgba(187, 247, 208, 0.12), inset 0 -28px 80px rgba(34, 197, 94, 0.1);
+            transform: translateY(-2px);
         }
 
         .loading-page {
             position: fixed;
             inset: 0;
-            background: linear-gradient(135deg, #0a0e27 0%, #0d1b2a 50%, #0a3d3a 100%);
+            background: linear-gradient(135deg, #020403 0%, #050805 50%, #06120a 100%);
             display: flex;
             align-items: center;
             justify-content: center;
@@ -138,13 +139,14 @@
         .collapsible-header {
             cursor: pointer;
             user-select: none;
-            transition: all 0.3s ease;
+            transition: background 0.45s ease, box-shadow 0.45s ease, transform 0.45s cubic-bezier(0.22, 1, 0.36, 1);
             border-radius: 12px;
         }
 
         .collapsible-header:hover {
-            background: rgba(34, 197, 94, 0.1);
-            box-shadow: inset 0 0 20px rgba(34, 197, 94, 0.1);
+            background: rgba(34, 197, 94, 0.08);
+            box-shadow: inset 0 0 35px rgba(34, 197, 94, 0.08), 0 10px 35px rgba(34, 197, 94, 0.08);
+            transform: translateY(-1px);
         }
 
         .toggle-icon {
@@ -162,23 +164,27 @@
         .collapsible-content {
             max-height: 0;
             overflow: hidden;
-            transition: max-height 0.3s ease;
+            opacity: 0;
+            transform: translateY(-10px) scale(0.985);
+            transition: max-height 0.75s cubic-bezier(0.22, 1, 0.36, 1), opacity 0.5s ease, transform 0.65s cubic-bezier(0.22, 1, 0.36, 1);
         }
 
         .collapsible-content.open {
-            max-height: 2000px;
+            max-height: 2400px;
+            opacity: 1;
+            transform: translateY(0) scale(1);
         }
 
         .modal-overlay {
             backdrop-filter: blur(8px);
-            background-color: rgba(10, 14, 39, 0.7);
+            background-color: rgba(2, 4, 3, 0.7);
         }
 
         .modal-content {
             max-height: 85vh;
             overflow-y: auto;
             scrollbar-width: thin;
-            scrollbar-color: rgba(34, 197, 94, 0.3) rgba(13, 27, 42, 0.5);
+            scrollbar-color: rgba(34, 197, 94, 0.3) rgba(2, 8, 4, 0.72);
         }
 
         .modal-content::-webkit-scrollbar {
@@ -186,7 +192,7 @@
         }
 
         .modal-content::-webkit-scrollbar-track {
-            background: rgba(13, 27, 42, 0.5);
+            background: rgba(2, 8, 4, 0.72);
             border-radius: 4px;
         }
 
@@ -284,7 +290,7 @@
         textarea {
             resize: vertical;
             font-family: 'Poppins', sans-serif;
-            background-color: rgba(13, 27, 42, 0.5) !important;
+            background-color: rgba(2, 8, 4, 0.72) !important;
             border: 1px solid rgba(34, 197, 94, 0.2) !important;
             color: #e5e7eb !important;
         }
@@ -296,7 +302,7 @@
 
         input[type="text"],
         input[type="url"] {
-            background-color: rgba(13, 27, 42, 0.5) !important;
+            background-color: rgba(2, 8, 4, 0.72) !important;
             border: 1px solid rgba(34, 197, 94, 0.2) !important;
             color: #e5e7eb !important;
         }
@@ -322,7 +328,7 @@
             padding: 8px 16px;
             border-radius: 20px;
             border: 1px solid rgba(34, 197, 94, 0.4);
-            background: rgba(13, 27, 42, 0.8);
+            background: rgba(2, 8, 4, 0.9);
             color: #22c55e;
             font-weight: 600;
             font-size: 0.875rem;
@@ -344,6 +350,68 @@
             box-shadow: 0 0 40px rgba(34, 197, 94, 0.6);
         }
 
+        .app-header {
+            background: linear-gradient(180deg, rgba(0, 0, 0, 0.98) 0%, rgba(3, 15, 6, 0.96) 52%, rgba(0, 0, 0, 0.98) 100%);
+            box-shadow: 0 18px 60px rgba(0, 0, 0, 0.62), 0 10px 55px rgba(34, 197, 94, 0.14), inset 0 -1px 0 rgba(34, 197, 94, 0.2), inset 0 1px 0 rgba(187, 247, 208, 0.08);
+            backdrop-filter: blur(18px);
+        }
+
+        .app-header::after {
+            content: '';
+            position: absolute;
+            left: 8%;
+            right: 8%;
+            bottom: -1px;
+            height: 2px;
+            background: linear-gradient(90deg, transparent, rgba(34, 197, 94, 0.28), rgba(163, 230, 53, 0.48), rgba(34, 197, 94, 0.28), transparent);
+            filter: blur(0.5px);
+        }
+
+        .refresh-overlay {
+            position: fixed;
+            inset: 0;
+            z-index: 80;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-direction: column;
+            gap: 34px;
+            pointer-events: none;
+            opacity: 0;
+            transform: scale(0.96);
+            transition: opacity 0.35s ease, transform 0.55s cubic-bezier(0.22, 1, 0.36, 1);
+        }
+
+        .refresh-overlay.active {
+            opacity: 1;
+            transform: scale(1);
+        }
+
+        .refresh-overlay.finishing {
+            opacity: 0;
+            transform: scale(1.08);
+        }
+
+        .refresh-overlay .tropicarium-title {
+            font-size: 3rem;
+            background: rgba(0, 0, 0, 0.28);
+            border-radius: 24px;
+            padding: 8px 28px;
+            backdrop-filter: blur(2px);
+        }
+
+        .editable-field {
+            background: rgba(2, 8, 4, 0.64);
+            border: 1px solid rgba(34, 197, 94, 0.22);
+            border-radius: 12px;
+            min-height: 110px;
+        }
+
+        .editable-field:focus {
+            border-color: rgba(34, 197, 94, 0.55);
+            box-shadow: 0 0 24px rgba(34, 197, 94, 0.18);
+        }
+
         @media (max-width: 768px) {
             .tropicarium-title {
                 font-size: 2.5rem;
@@ -362,13 +430,17 @@
         <h1 class="tropicarium-title">TROPICARIUM</h1>
         <div class="swipe-loader"></div>
     </div>
+    <div id="refreshOverlay" class="refresh-overlay">
+        <h1 class="tropicarium-title">TROPICARIUM</h1>
+        <div class="swipe-loader"></div>
+    </div>
     <script>
         const API_URL = "https://script.google.com/macros/s/AKfycbwc0Zn8q8bhXlmPQo6ovOUhMjnvH3FIr5hfXV9N6bKYrgKL9p9PJD3PP_MjJb6R0nziSw/exec";
     </script>
 
     <div id="appShell">
     <!-- Header -->
-    <header class="sticky top-0 z-30 bg-gradient-to-b from-[#0a0e27] via-[#0d2818] to-[#0a0e27] border-b border-green-900/50 glow-box">
+    <header class="app-header sticky top-0 z-30 border-b border-green-900/40">
         <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 sm:py-6">
             <div class="flex items-center justify-between">
                 <div>
@@ -409,9 +481,9 @@
 
     <!-- Add Video Modal -->
     <div id="videoModal" class="hidden fixed inset-0 z-50 flex items-center justify-center modal-overlay">
-        <div class="bg-gradient-to-b from-[#0a0e27] to-[#0d2818] rounded-lg shadow-2xl w-full mx-4 max-w-2xl modal-content border border-green-900/30 glow-box">
+        <div class="bg-gradient-to-b from-[#020403] to-[#071107] rounded-lg shadow-2xl w-full mx-4 max-w-2xl modal-content border border-green-900/30 glow-box">
             <!-- Modal Header -->
-            <div class="border-b border-green-900/30 p-4 sm:p-6 flex justify-between items-center sticky top-0 bg-gradient-to-r from-[#0a0e27] to-[#0d2818] rounded-t-lg">
+            <div class="border-b border-green-900/30 p-4 sm:p-6 flex justify-between items-center sticky top-0 bg-gradient-to-r from-[#020403] to-[#071107] rounded-t-lg">
                 <h2 class="text-xl sm:text-2xl font-bold text-green-400 glow-text">Add New Video Idea</h2>
                 <button onclick="closeVideoModal()" class="text-green-400/60 hover:text-green-300 text-3xl font-light transition">×</button>
             </div>
@@ -607,11 +679,31 @@
              }
          }
 
+         function showRefreshOverlay() {
+             const overlay = document.getElementById('refreshOverlay');
+             if (!overlay) return;
+             overlay.classList.remove('finishing');
+             overlay.classList.add('active');
+         }
+
+         function hideRefreshOverlay() {
+             const overlay = document.getElementById('refreshOverlay');
+             if (!overlay) return;
+             overlay.classList.add('finishing');
+             overlay.classList.remove('active');
+             setTimeout(() => {
+                 overlay.classList.remove('finishing');
+             }, 550);
+         }
+
          async function refreshData() {
              console.log('Manual refresh triggered');
              updateSyncStatus('Refreshing...');
+             showRefreshOverlay();
              const contentArea = document.getElementById('contentArea');
              contentArea.style.opacity = '0.5';
+             contentArea.style.transform = 'scale(0.985)';
+             contentArea.style.transition = 'opacity 0.35s ease, transform 0.55s cubic-bezier(0.22, 1, 0.36, 1)';
              
              try {
                  await fetchVideosFromAPI();
@@ -623,6 +715,8 @@
                  updateSyncStatus('Refresh failed - check console');
              } finally {
                  contentArea.style.opacity = '1';
+                 contentArea.style.transform = 'scale(1)';
+                 hideRefreshOverlay();
              }
          }
 
@@ -700,6 +794,51 @@
                 return false;
             }
         }
+
+         async function updateVideoFields(id, fields) {
+             const existingVideo = appState.videos.find(v => v.id === id);
+             if (!existingVideo) return false;
+
+             const updatedVideo = normalizeVideo({
+                 ...existingVideo,
+                 ...fields,
+                 id: existingVideo.id,
+                 createdAt: existingVideo.createdAt || new Date().toISOString()
+             });
+
+             if (appState.usesMockData) {
+                 Object.assign(existingVideo, updatedVideo);
+                 return true;
+             }
+
+             try {
+                 const deleteResponse = await fetch(API_URL, {
+                     method: 'POST',
+                     headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+                     body: JSON.stringify({ action: 'delete', id: id })
+                 });
+
+                 if (!deleteResponse.ok) {
+                     throw new Error(`Delete failed: ${deleteResponse.status}`);
+                 }
+
+                 const saveResponse = await fetch(API_URL, {
+                     method: 'POST',
+                     headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+                     body: JSON.stringify(updatedVideo)
+                 });
+
+                 if (!saveResponse.ok) {
+                     throw new Error(`Save failed: ${saveResponse.status}`);
+                 }
+
+                 Object.assign(existingVideo, updatedVideo);
+                 return true;
+             } catch (error) {
+                 console.error('Failed to replace video:', error);
+                 return false;
+             }
+         }
 
          async function deleteVideo(id) {
              // 1. The "Are you sure?" Popup
@@ -904,10 +1043,10 @@
                  const isExpanded = appState.expandedMonths[monthDisplay] || false;
 
                 const monthSection = document.createElement('div');
-                monthSection.className = 'bg-gradient-to-b from-[#0d1b2a] to-[#0a2a2a] rounded-xl border border-green-900/30 shadow-lg overflow-hidden glow-box';
+                monthSection.className = 'bg-gradient-to-b from-[#050805] to-[#061006] rounded-xl border border-green-900/30 shadow-lg overflow-hidden glow-box';
 
                 const header = document.createElement('div');
-                header.className = 'collapsible-header p-4 sm:p-5 flex justify-between items-center bg-gradient-to-r from-[#0d2818] to-[#0a2a2a] border-b border-green-900/30';
+                header.className = 'collapsible-header p-4 sm:p-5 flex justify-between items-center bg-gradient-to-r from-[#071107] to-[#061006] border-b border-green-900/30';
                 header.onclick = () => toggleMonth(monthDisplay, monthSection);
 
                 const headerLeft = document.createElement('div');
@@ -974,7 +1113,7 @@
        
       function createVideoCard(video) {
             const card = document.createElement('div');
-            card.className = 'bg-gradient-to-b from-[#0d1b2a] to-[#0a2a2a] rounded-xl border border-green-900/30 p-4 sm:p-5 hover:shadow-lg transition glow-hover';
+            card.className = 'bg-gradient-to-b from-[#050805] to-[#061006] rounded-xl border border-green-900/30 p-4 sm:p-5 hover:shadow-lg transition glow-hover';
             card.style.boxShadow = '0 0 20px rgba(34, 197, 94, 0.15)';
 
             // Add ID to the card so we can target it for the fading animation
@@ -1000,7 +1139,7 @@
             const typeBadge = document.createElement('span');
             typeBadge.className = `text-xs font-semibold px-2 py-1 rounded floating-tab ${
                 video.type === 'Long' 
-                    ? 'bg-gradient-to-r from-indigo-900/40 to-purple-900/40 text-purple-300 border border-purple-900/50' 
+                    ? 'bg-gradient-to-r from-green-950/70 to-lime-950/50 text-lime-300 border border-lime-900/50' 
                     : 'bg-gradient-to-r from-green-900/40 to-emerald-900/40 text-green-300 border border-green-900/50'
             }`;
             typeBadge.textContent = video.type === 'Long' ? 'Long (25s)' : 'Short (10s)';
@@ -1059,7 +1198,16 @@
 
             const captionContent = document.createElement('div');
             captionContent.className = 'collapsible-content mt-2';
-            captionContent.innerHTML = `<p class="text-xs sm:text-sm text-green-300/70 break-words">${video.caption || 'No caption'}</p>`;
+            const captionTextarea = document.createElement('textarea');
+            captionTextarea.className = 'editable-field w-full px-3 py-3 text-xs sm:text-sm text-green-300/80 focus:outline-none transition';
+            captionTextarea.value = video.caption || '';
+            captionTextarea.placeholder = 'No caption';
+            const captionSaveBtn = document.createElement('button');
+            captionSaveBtn.className = 'mt-2 px-3 py-2 text-xs font-semibold rounded floating-tab';
+            captionSaveBtn.textContent = 'Save Caption';
+            captionSaveBtn.onclick = () => saveEditableField(video.id, 'caption', captionTextarea.value, captionSaveBtn);
+            captionContent.appendChild(captionTextarea);
+            captionContent.appendChild(captionSaveBtn);
 
             caption.appendChild(captionHeader);
             caption.appendChild(captionContent);
@@ -1074,7 +1222,17 @@
 
             const scriptContent = document.createElement('div');
             scriptContent.className = 'collapsible-content mt-2';
-            scriptContent.innerHTML = `<p class="text-xs sm:text-sm text-green-300/70 break-words whitespace-pre-wrap">${video.script || 'No script'}</p>`;
+            const scriptTextarea = document.createElement('textarea');
+            scriptTextarea.className = 'editable-field w-full px-3 py-3 text-xs sm:text-sm text-green-300/80 focus:outline-none transition';
+            scriptTextarea.value = video.script || '';
+            scriptTextarea.placeholder = 'No script';
+            scriptTextarea.style.minHeight = '150px';
+            const scriptSaveBtn = document.createElement('button');
+            scriptSaveBtn.className = 'mt-2 px-3 py-2 text-xs font-semibold rounded floating-tab';
+            scriptSaveBtn.textContent = 'Save Script';
+            scriptSaveBtn.onclick = () => saveEditableField(video.id, 'script', scriptTextarea.value, scriptSaveBtn);
+            scriptContent.appendChild(scriptTextarea);
+            scriptContent.appendChild(scriptSaveBtn);
 
             script.appendChild(scriptHeader);
             script.appendChild(scriptContent);
@@ -1091,6 +1249,30 @@
             card.appendChild(script);
 
             return card;
+        }
+
+        async function saveEditableField(id, field, value, button) {
+            const originalText = button.textContent;
+            button.textContent = 'Saving...';
+            button.disabled = true;
+            updateSyncStatus('Saving edit...');
+
+            const saved = await updateVideoFields(id, { [field]: value });
+
+            if (saved) {
+                button.textContent = 'Saved ✓';
+                updateSyncStatus('Saved ✓');
+                setTimeout(() => {
+                    button.textContent = originalText;
+                    button.disabled = false;
+                    refreshData();
+                }, 1200);
+            } else {
+                button.textContent = originalText;
+                button.disabled = false;
+                updateSyncStatus('Save failed');
+                alert('Failed to save changes. Please try again.');
+            }
         }
 
         function toggleCollapsible(e, element) {
