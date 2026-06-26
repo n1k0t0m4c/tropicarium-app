@@ -1,0 +1,1099 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Tropicarium - Content Pipeline</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700;800&family=Playfair+Display:wght@700&display=swap" rel="stylesheet">
+    <style>
+        * {
+            font-family: 'Poppins', sans-serif;
+        }
+
+        body {
+            background: linear-gradient(135deg, #0a0e27 0%, #0d1b2a 50%, #0a3d3a 100%);
+            min-height: 100vh;
+            overflow-x: hidden;
+        }
+
+        h1, h2, h3, h4, h5, h6 {
+            font-family: 'Playfair Display', serif;
+        }
+
+        .glow-text {
+            text-shadow: 0 0 20px rgba(34, 197, 94, 0.6), 0 0 40px rgba(34, 197, 94, 0.3);
+        }
+
+        .glow-box {
+            box-shadow: 0 0 30px rgba(34, 197, 94, 0.3), inset 0 0 20px rgba(34, 197, 94, 0.1);
+        }
+
+        .glow-hover:hover {
+            box-shadow: 0 0 40px rgba(34, 197, 94, 0.5), inset 0 0 30px rgba(34, 197, 94, 0.15);
+        }
+
+        .loading-page {
+            position: fixed;
+            inset: 0;
+            background: linear-gradient(135deg, #0a0e27 0%, #0d1b2a 50%, #0a3d3a 100%);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 999;
+            flex-direction: column;
+            gap: 40px;
+        }
+
+        .loading-page.zoom-out {
+            animation: loading-zoom-out 0.7s cubic-bezier(0.22, 1, 0.36, 1) forwards;
+        }
+
+        #appShell {
+            transform: scale(0.96);
+            opacity: 0;
+            transition: transform 0.7s cubic-bezier(0.22, 1, 0.36, 1), opacity 0.7s ease;
+        }
+
+        #appShell.app-visible {
+            transform: scale(1);
+            opacity: 1;
+        }
+
+        @keyframes loading-zoom-out {
+            0% {
+                opacity: 1;
+                transform: scale(1);
+            }
+            100% {
+                opacity: 0;
+                transform: scale(1.08);
+            }
+        }
+
+        .tropicarium-title {
+            font-size: 4rem;
+            font-weight: 800;
+            letter-spacing: 8px;
+            color: #22c55e;
+            text-shadow: 0 0 30px rgba(34, 197, 94, 0.8), 0 0 60px rgba(34, 197, 94, 0.4);
+            animation: glow-pulse 2s ease-in-out infinite;
+            font-family: 'Playfair Display', serif;
+        }
+
+        @keyframes glow-pulse {
+            0%, 100% {
+                text-shadow: 0 0 30px rgba(34, 197, 94, 0.8), 0 0 60px rgba(34, 197, 94, 0.4);
+            }
+            50% {
+                text-shadow: 0 0 50px rgba(34, 197, 94, 1), 0 0 80px rgba(34, 197, 94, 0.6);
+            }
+        }
+
+        .swipe-loader {
+            width: 300px;
+            height: 4px;
+            background: rgba(34, 197, 94, 0.2);
+            border-radius: 2px;
+            overflow: hidden;
+            position: relative;
+        }
+
+        .swipe-loader::after {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            height: 100%;
+            width: 30%;
+            background: linear-gradient(90deg, transparent, #22c55e, transparent);
+            animation: swipe 1.5s infinite;
+            box-shadow: 0 0 15px rgba(34, 197, 94, 0.8);
+        }
+
+        @keyframes swipe {
+            0% { left: -30%; }
+            100% { left: 100%; }
+        }
+
+        .star {
+            display: inline-block;
+            color: #10b981;
+            font-size: 1.25rem;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            text-shadow: 0 0 10px rgba(16, 185, 129, 0.5);
+        }
+
+        .star:hover {
+            transform: scale(1.2);
+            text-shadow: 0 0 20px rgba(16, 185, 129, 0.8);
+        }
+
+        .star.empty {
+            color: #1e3a3a;
+            text-shadow: none;
+        }
+
+        .collapsible-header {
+            cursor: pointer;
+            user-select: none;
+            transition: all 0.3s ease;
+            border-radius: 12px;
+        }
+
+        .collapsible-header:hover {
+            background: rgba(34, 197, 94, 0.1);
+            box-shadow: inset 0 0 20px rgba(34, 197, 94, 0.1);
+        }
+
+        .toggle-icon {
+            transition: transform 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
+            display: inline-block;
+            font-size: 1rem;
+            color: #22c55e;
+            text-shadow: 0 0 10px rgba(34, 197, 94, 0.5);
+        }
+
+        .toggle-icon.open {
+            transform: rotate(180deg);
+        }
+
+        .collapsible-content {
+            max-height: 0;
+            overflow: hidden;
+            transition: max-height 0.3s ease;
+        }
+
+        .collapsible-content.open {
+            max-height: 2000px;
+        }
+
+        .modal-overlay {
+            backdrop-filter: blur(8px);
+            background-color: rgba(10, 14, 39, 0.7);
+        }
+
+        .modal-content {
+            max-height: 85vh;
+            overflow-y: auto;
+            scrollbar-width: thin;
+            scrollbar-color: rgba(34, 197, 94, 0.3) rgba(13, 27, 42, 0.5);
+        }
+
+        .modal-content::-webkit-scrollbar {
+            width: 8px;
+        }
+
+        .modal-content::-webkit-scrollbar-track {
+            background: rgba(13, 27, 42, 0.5);
+            border-radius: 4px;
+        }
+
+        .modal-content::-webkit-scrollbar-thumb {
+            background: rgba(34, 197, 94, 0.3);
+            border-radius: 4px;
+        }
+
+        .modal-content::-webkit-scrollbar-thumb:hover {
+            background: rgba(34, 197, 94, 0.5);
+        }
+
+        .type-toggle-container {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 12px;
+            border: 2px solid rgba(34, 197, 94, 0.3);
+            border-radius: 10px;
+            background: rgba(34, 197, 94, 0.05);
+            transition: all 0.3s ease;
+        }
+
+        .type-label {
+            font-size: 0.875rem;
+            font-weight: 600;
+            color: #a3e635;
+            min-width: 45px;
+            transition: all 0.3s ease;
+        }
+
+        .type-label.active {
+            color: #22c55e;
+            font-weight: 700;
+            text-shadow: 0 0 10px rgba(34, 197, 94, 0.6);
+        }
+
+        .toggle-switch {
+            position: relative;
+            display: inline-block;
+            width: 64px;
+            height: 32px;
+            flex-shrink: 0;
+        }
+
+        .toggle-switch input {
+            opacity: 0;
+            width: 0;
+            height: 0;
+        }
+
+        .toggle-slider {
+            position: absolute;
+            cursor: pointer;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background-color: rgba(34, 197, 94, 0.2);
+            transition: background-color 0.4s ease;
+            border-radius: 32px;
+            border: 1px solid rgba(34, 197, 94, 0.3);
+        }
+
+        .toggle-slider:before {
+            position: absolute;
+            content: "";
+            height: 28px;
+            width: 28px;
+            left: 2px;
+            bottom: 2px;
+            background-color: #22c55e;
+            transition: transform 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
+            border-radius: 50%;
+            box-shadow: 0 0 15px rgba(34, 197, 94, 0.5);
+        }
+
+        input:checked + .toggle-slider {
+            background-color: rgba(34, 197, 94, 0.3);
+            border-color: rgba(34, 197, 94, 0.6);
+        }
+
+        input:checked + .toggle-slider:before {
+            transform: translateX(32px);
+        }
+
+        .btn-add {
+            min-height: 44px;
+            min-width: 44px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        textarea {
+            resize: vertical;
+            font-family: 'Poppins', sans-serif;
+            background-color: rgba(13, 27, 42, 0.5) !important;
+            border: 1px solid rgba(34, 197, 94, 0.2) !important;
+            color: #e5e7eb !important;
+        }
+
+        textarea:focus {
+            border-color: rgba(34, 197, 94, 0.5) !important;
+            box-shadow: 0 0 20px rgba(34, 197, 94, 0.3) !important;
+        }
+
+        input[type="text"],
+        input[type="url"] {
+            background-color: rgba(13, 27, 42, 0.5) !important;
+            border: 1px solid rgba(34, 197, 94, 0.2) !important;
+            color: #e5e7eb !important;
+        }
+
+        input[type="text"]:focus,
+        input[type="url"]:focus {
+            border-color: rgba(34, 197, 94, 0.5) !important;
+            box-shadow: 0 0 20px rgba(34, 197, 94, 0.3) !important;
+        }
+
+        input::placeholder {
+            color: rgba(229, 231, 235, 0.5) !important;
+        }
+
+        .card-title {
+            word-break: break-word;
+            overflow-wrap: break-word;
+        }
+
+        .floating-tab {
+            position: relative;
+            display: inline-block;
+            padding: 8px 16px;
+            border-radius: 20px;
+            border: 1px solid rgba(34, 197, 94, 0.4);
+            background: rgba(13, 27, 42, 0.8);
+            color: #22c55e;
+            font-weight: 600;
+            font-size: 0.875rem;
+            transition: all 0.3s ease;
+            cursor: pointer;
+            box-shadow: 0 0 20px rgba(34, 197, 94, 0.2);
+        }
+
+        .floating-tab:hover {
+            border-color: rgba(34, 197, 94, 0.8);
+            box-shadow: 0 0 30px rgba(34, 197, 94, 0.4);
+            transform: translateY(-2px);
+            background: rgba(34, 197, 94, 0.1);
+        }
+
+        .floating-tab.active {
+            background: rgba(34, 197, 94, 0.2);
+            border-color: rgba(34, 197, 94, 0.8);
+            box-shadow: 0 0 40px rgba(34, 197, 94, 0.6);
+        }
+
+        @media (max-width: 768px) {
+            .tropicarium-title {
+                font-size: 2.5rem;
+                letter-spacing: 4px;
+            }
+
+            .swipe-loader {
+                width: 200px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- Loading Page -->
+    <div id="loadingPageOverlay" class="loading-page">
+        <h1 class="tropicarium-title">TROPICARIUM</h1>
+        <div class="swipe-loader"></div>
+    </div>
+    <script>
+        const API_URL = "https://script.google.com/macros/s/AKfycbwc0Zn8q8bhXlmPQo6ovOUhMjnvH3FIr5hfXV9N6bKYrgKL9p9PJD3PP_MjJb6R0nziSw/exec";
+    </script>
+
+    <div id="appShell">
+    <!-- Header -->
+    <header class="sticky top-0 z-30 bg-gradient-to-b from-[#0a0e27] via-[#0d2818] to-[#0a0e27] border-b border-green-900/50 glow-box">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 sm:py-6">
+            <div class="flex items-center justify-between">
+                <div>
+                    <h1 class="text-2xl sm:text-3xl font-bold text-green-400 glow-text">🌿 TROPICARIUM</h1>
+                    <p class="text-sm sm:text-base text-green-300/70 mt-1">Manage your content</p>
+                </div>
+                <div class="flex items-center gap-2 sm:gap-4">
+                    <div id="syncStatus" class="text-xs sm:text-sm text-green-300/60"></div>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <!-- Main Content -->
+    <main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 sm:py-8">
+        <div id="loadingState" class="flex flex-col items-center justify-center py-12">
+            <div class="inline-block">
+                <div class="swipe-loader"></div>
+            </div>
+            <p class="text-green-300 text-sm sm:text-base mt-6">Loading your aquarium pipeline...</p>
+        </div>
+
+        <div id="errorState" class="hidden bg-red-950/50 border border-red-800/50 rounded-lg p-4 sm:p-6 mb-6 glow-box"
+             style="box-shadow: 0 0 30px rgba(239, 68, 68, 0.2);">
+            <h3 class="text-red-400 font-semibold text-sm sm:text-base mb-2">Configuration Required</h3>
+            <p class="text-red-300/70 text-xs sm:text-sm">
+                The API URL is not configured. The app is using mock data for demonstration. 
+                To use real data, update the <code class="bg-red-900/30 px-2 py-1 rounded text-xs border border-red-800/50">API_URL</code> constant.
+            </p>
+        </div>
+
+        <div id="contentArea" class="hidden space-y-4 sm:space-y-6">
+            <!-- Accordions will be rendered here -->
+        </div>
+    </main>
+    </div>
+
+    <!-- Add Video Modal -->
+    <div id="videoModal" class="hidden fixed inset-0 z-50 flex items-center justify-center modal-overlay">
+        <div class="bg-gradient-to-b from-[#0a0e27] to-[#0d2818] rounded-lg shadow-2xl w-full mx-4 max-w-2xl modal-content border border-green-900/30 glow-box">
+            <!-- Modal Header -->
+            <div class="border-b border-green-900/30 p-4 sm:p-6 flex justify-between items-center sticky top-0 bg-gradient-to-r from-[#0a0e27] to-[#0d2818] rounded-t-lg">
+                <h2 class="text-xl sm:text-2xl font-bold text-green-400 glow-text">Add New Video Idea</h2>
+                <button onclick="closeVideoModal()" class="text-green-400/60 hover:text-green-300 text-3xl font-light transition">×</button>
+            </div>
+
+            <!-- Modal Form -->
+            <form id="videoForm" class="p-4 sm:p-6 space-y-4 sm:space-y-6">
+                <!-- Month (Hidden, pre-selected) -->
+                <input type="hidden" id="formMonth" name="month">
+
+                <!-- Title -->
+                <div>
+                    <label class="block text-sm font-semibold text-green-300 mb-2">Title</label>
+                    <input 
+                        type="text" 
+                        id="formTitle" 
+                        required 
+                        class="w-full px-4 py-3 border border-green-900/30 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-green-900/60 text-sm sm:text-base transition"
+                        placeholder="Npr. Nov terarij v ponudbi!"
+                    >
+                </div>
+
+                <!-- Type Toggle -->
+                <div>
+                    <label class="block text-sm font-semibold text-green-300 mb-3">Video Type</label>
+                    <div class="type-toggle-container">
+                        <span class="type-label active" id="shortLabel">Short</span>
+                        <label class="toggle-switch">
+                            <input type="checkbox" id="formType" onchange="updateTypeLabel()">
+                            <span class="toggle-slider"></span>
+                        </label>
+                        <span class="type-label" id="longLabel">Long</span>
+                    </div>
+                    <p class="text-xs text-green-300/60 mt-2">Short: 10s • Long: 25s</p>
+                </div>
+
+                <!-- Reference Link -->
+                <div>
+                    <label class="block text-sm font-semibold text-green-300 mb-2">Reference Link</label>
+                    <input 
+                        type="url" 
+                        id="formLink" 
+                        class="w-full px-4 py-3 border border-green-900/30 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-green-900/60 text-sm sm:text-base transition"
+                        placeholder="https://example.com"
+                    >
+                </div>
+
+                <!-- Google Drive Video Link -->
+                <div>
+                    <label class="block text-sm font-semibold text-green-300 mb-2">Google Drive Video Link</label>
+                    <input 
+                        type="url" 
+                        id="formDriveLink" 
+                        class="w-full px-4 py-3 border border-green-900/30 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-green-900/60 text-sm sm:text-base transition"
+                        placeholder="https://drive.google.com/file/d/FILE_ID/view"
+                    >
+                    <p class="text-xs text-green-300/60 mt-1">Share the Drive link with anyone who has the link. The video will play directly in the card.</p>
+                </div>
+
+                <!-- Caption -->
+                <div>
+                    <label class="block text-sm font-semibold text-green-300 mb-2">Caption</label>
+                    <textarea 
+                        id="formCaption" 
+                        rows="3" 
+                        class="w-full px-4 py-3 border border-green-900/30 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-green-900/60 text-sm sm:text-base transition"
+                        placeholder="Add caption text..."
+                    ></textarea>
+                </div>
+
+                <!-- Script -->
+                <div>
+                    <label class="block text-sm font-semibold text-green-300 mb-2">Script</label>
+                    <textarea 
+                        id="formScript" 
+                        rows="5" 
+                        class="w-full px-4 py-3 border border-green-900/30 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-green-900/60 text-sm sm:text-base transition"
+                        placeholder="Write your script here..."
+                    ></textarea>
+                </div>
+
+                <!-- Star Rating -->
+                <div>
+                    <label class="block text-sm font-semibold text-green-300 mb-3">Priority</label>
+                    <div class="flex gap-2 items-center flex-wrap">
+                        <div class="flex gap-1 p-3 border border-green-900/30 rounded-lg bg-green-900/10">
+                            <button type="button" class="star-btn" data-stars="1" onclick="setStarRating(1)">
+                                <span class="star">★</span>
+                            </button>
+                            <button type="button" class="star-btn" data-stars="2" onclick="setStarRating(2)">
+                                <span class="star">★</span>
+                            </button>
+                            <button type="button" class="star-btn" data-stars="3" onclick="setStarRating(3)">
+                                <span class="star">★</span>
+                            </button>
+                        </div>
+                        <span id="starDescription" class="text-sm text-green-300/70">Click to select priority</span>
+                    </div>
+                    <input type="hidden" id="formStars" value="1">
+                </div>
+
+                <!-- Form Actions -->
+                <div class="flex gap-3 pt-4 sm:pt-6 border-t border-green-900/30">
+                    <button 
+                        type="button" 
+                        onclick="closeVideoModal()" 
+                        class="flex-1 px-4 py-3 border border-green-900/30 text-green-400 font-semibold rounded-lg hover:bg-green-900/10 hover:border-green-900/60 transition text-sm sm:text-base"
+                    >
+                        Cancel
+                    </button>
+                    <button 
+                        type="submit" 
+                        id="submitBtn" 
+                        class="flex-1 px-4 py-3 bg-gradient-to-r from-green-600 to-emerald-600 text-white font-semibold rounded-lg hover:from-green-500 hover:to-emerald-500 transition text-sm sm:text-base btn-add glow-hover"
+                        style="box-shadow: 0 0 20px rgba(34, 197, 94, 0.4);"
+                    >
+                        Save Idea
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <script>
+        // ==================== STATE MANAGEMENT ====================
+        let appState = {
+            videos: [],
+            isLoading: true,
+            isSaving: false,
+            usesMockData: false,
+            expandedMonths: {},
+            currentFormMonth: null,
+        };
+
+        // ==================== INITIALIZATION ====================
+        document.addEventListener('DOMContentLoaded', initializeApp);
+
+        async function initializeApp() {
+            console.log('Initializing Content Pipeline Manager...');
+            
+            const isApiConfigured = API_URL !== "YOUR_GOOGLE_SHEETS_API_URL_HERE";
+            
+            if (!isApiConfigured) {
+                console.warn('API_URL is not configured. Using mock data for demonstration.');
+                appState.usesMockData = true;
+                loadMockData();
+                setTimeout(() => {
+                    renderUI();
+                    hideLoadingPage();
+                    showErrorState();
+                }, 1500);
+            } else {
+                try {
+                    await fetchVideosFromAPI();
+                    renderUI();
+                    hideLoadingPage();
+                    hideErrorState();
+                } catch (error) {
+                    console.error('Failed to fetch from API:', error);
+                    loadMockData();
+                    setTimeout(() => {
+                        renderUI();
+                        hideLoadingPage();
+                        showErrorState();
+                    }, 1500);
+                }
+            }
+        }
+
+        // ==================== API FUNCTIONS ====================
+        async function fetchVideosFromAPI() {
+            try {
+                const response = await fetch(API_URL, {
+                    method: 'GET',
+                    headers: {
+                        'Content-Type': 'text/plain;charset=utf-8',
+                    }
+                });
+
+                if (!response.ok) {
+                    throw new Error(`API error: ${response.statusCode}`);
+                }
+
+                const data = await response.json();
+                appState.videos = Array.isArray(data) ? data : data.videos || [];
+                appState.isLoading = false;
+            } catch (error) {
+                console.error('API fetch failed:', error);
+                throw error;
+            }
+        }
+
+        async function saveVideoToAPI(video) {
+            if (appState.usesMockData) {
+                return true;
+            }
+
+            try {
+                const response = await fetch(API_URL, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify(video)
+                });
+
+                if (!response.ok) {
+                    throw new Error(`API error: ${response.statusCode}`);
+                }
+
+                return true;
+            } catch (error) {
+                console.error('Failed to save video to API:', error);
+                return false;
+            }
+        }
+
+        // ==================== MOCK DATA ====================
+        function loadMockData() {
+            const now = new Date();
+            const currentMonth = now.getMonth();
+            const currentYear = now.getFullYear();
+
+            appState.videos = [
+                {
+                    id: '1',
+                    title: 'Getting Started with React Hooks',
+                    type: 'Long',
+                    month: getMonthName(currentMonth) + ' ' + currentYear,
+                    link: 'https://react.dev',
+                    driveLink: '',
+                    caption: 'A comprehensive guide to understanding React Hooks',
+                    script: 'In this video, we will explore the fundamentals of React Hooks...',
+                    stars: 3,
+                    createdAt: new Date().toISOString()
+                },
+                {
+                    id: '2',
+                    title: 'CSS Grid Basics',
+                    type: 'Short',
+                    month: getMonthName(currentMonth) + ' ' + currentYear,
+                    link: 'https://developer.mozilla.org/css-grid',
+                    driveLink: '',
+                    caption: 'Learn CSS Grid in 10 seconds',
+                    script: 'CSS Grid allows us to create two-dimensional layouts...',
+                    stars: 2,
+                    createdAt: new Date().toISOString()
+                },
+                {
+                    id: '3',
+                    title: 'JavaScript Async/Await',
+                    type: 'Long',
+                    month: getMonthName((currentMonth + 1) % 12) + ' ' + (currentMonth === 11 ? currentYear + 1 : currentYear),
+                    link: 'https://javascript.info',
+                    driveLink: '',
+                    caption: 'Master asynchronous JavaScript',
+                    script: 'Async and await syntax makes promises easier to work with...',
+                    stars: 3,
+                    createdAt: new Date().toISOString()
+                },
+                {
+                    id: '4',
+                    title: 'Tailwind CSS Tips',
+                    type: 'Short',
+                    month: getMonthName((currentMonth + 1) % 12) + ' ' + (currentMonth === 11 ? currentYear + 1 : currentYear),
+                    link: 'https://tailwindcss.com',
+                    driveLink: '',
+                    caption: 'Quick tips for productivity',
+                    script: 'Tailwind utilities can be combined for powerful designs...',
+                    stars: 1,
+                    createdAt: new Date().toISOString()
+                }
+            ];
+
+            appState.isLoading = false;
+        }
+
+        // ==================== UTILITY FUNCTIONS ====================
+        function getMonthName(monthIndex) {
+            const monthNames = ['January', 'February', 'March', 'April', 'May', 'June',
+                              'July', 'August', 'September', 'October', 'November', 'December'];
+            return monthNames[monthIndex % 12];
+        }
+
+        function getUpcomingMonths(count = 4) {
+            const months = [];
+            const now = new Date();
+            
+            for (let i = 0; i < count; i++) {
+                const date = new Date(now.getFullYear(), now.getMonth() + i, 1);
+                const monthName = getMonthName(date.getMonth());
+                const year = date.getFullYear();
+                months.push({
+                    name: monthName,
+                    year: year,
+                    display: `${monthName} ${year}`,
+                    index: date.getMonth(),
+                    fullDate: date
+                });
+            }
+
+            return months;
+        }
+
+        function getCountByType(videos, type) {
+            return videos.filter(v => v.type === type).length;
+        }
+
+        function getVideosByMonth(monthDisplay) {
+            return appState.videos.filter(v => v.month === monthDisplay);
+        }
+
+        function getStarColor(stars) {
+            if (stars === 3) return 'text-red-500'; // Must Do
+            if (stars === 2) return 'text-orange-500'; // Maybe
+            return 'text-gray-400'; // Just an Idea
+        }
+
+        function getStarLabel(stars) {
+            if (stars === 3) return 'Must Do';
+            if (stars === 2) return 'Maybe';
+            return 'Just an Idea';
+        }
+
+        function extractGoogleDriveFileId(url) {
+            if (!url) return null;
+            const patterns = [
+                /\/file\/d\/([a-zA-Z0-9-_]+)\//,
+                /id=([a-zA-Z0-9-_]+)/,
+                /\/d\/([a-zA-Z0-9-_]+)/
+            ];
+            
+            for (let pattern of patterns) {
+                const match = url.match(pattern);
+                if (match && match[1]) {
+                    return match[1];
+                }
+            }
+            return null;
+        }
+
+        // ==================== UI RENDERING ====================
+        function renderUI() {
+            const contentArea = document.getElementById('contentArea');
+            const loadingState = document.getElementById('loadingState');
+            
+            loadingState.classList.add('hidden');
+            contentArea.classList.remove('hidden');
+
+            const months = getUpcomingMonths(4);
+            contentArea.innerHTML = '';
+
+            months.forEach(month => {
+                const monthDisplay = month.display;
+                const monthVideos = getVideosByMonth(monthDisplay);
+                const longCount = getCountByType(monthVideos, 'Long');
+                const shortCount = getCountByType(monthVideos, 'Short');
+                const isExpanded = appState.expandedMonths[monthDisplay] || false;
+
+                const monthSection = document.createElement('div');
+                monthSection.className = 'bg-gradient-to-b from-[#0d1b2a] to-[#0a2a2a] rounded-xl border border-green-900/30 shadow-lg overflow-hidden glow-box';
+
+                const header = document.createElement('div');
+                header.className = 'collapsible-header p-4 sm:p-5 flex justify-between items-center bg-gradient-to-r from-[#0d2818] to-[#0a2a2a] border-b border-green-900/30';
+                header.onclick = () => toggleMonth(monthDisplay, monthSection);
+
+                const headerLeft = document.createElement('div');
+                headerLeft.className = 'flex-1 min-w-0';
+
+                const title = document.createElement('h2');
+                title.className = 'text-lg sm:text-xl font-bold text-green-400 glow-text';
+                title.textContent = `${monthDisplay}`;
+
+                const badge = document.createElement('p');
+                badge.className = 'text-xs sm:text-sm text-green-300/70 mt-1';
+                badge.textContent = `${longCount} Long, ${shortCount} Short`;
+
+                headerLeft.appendChild(title);
+                headerLeft.appendChild(badge);
+
+                const headerRight = document.createElement('div');
+                headerRight.className = 'flex gap-2 sm:gap-3 items-center ml-3 flex-shrink-0';
+
+                const addBtn = document.createElement('button');
+                addBtn.className = 'btn-add px-3 sm:px-4 py-2 bg-gradient-to-r from-green-600 to-emerald-600 text-white rounded-lg hover:from-green-500 hover:to-emerald-500 transition font-semibold text-xs sm:text-sm floating-tab';
+                addBtn.innerHTML = '<span class="text-lg leading-none">+</span>';
+                addBtn.style.boxShadow = '0 0 15px rgba(34, 197, 94, 0.4)';
+                addBtn.onclick = (e) => {
+                    e.stopPropagation();
+                    openVideoModal(monthDisplay);
+                };
+
+                const toggleIcon = document.createElement('span');
+                toggleIcon.className = `toggle-icon text-lg font-light ${isExpanded ? 'open' : ''}`;
+                toggleIcon.textContent = '▼';
+                toggleIcon.style.display = 'block';
+
+                headerRight.appendChild(addBtn);
+                headerRight.appendChild(toggleIcon);
+
+                header.appendChild(headerLeft);
+                header.appendChild(headerRight);
+
+                const contentContainer = document.createElement('div');
+                contentContainer.className = 'collapsible-content ' + (isExpanded ? 'open' : '');
+
+                if (monthVideos.length === 0) {
+                    const emptyState = document.createElement('div');
+                    emptyState.className = 'p-6 sm:p-8 text-center text-green-300/60';
+                    emptyState.innerHTML = '<p class="text-sm sm:text-base">No ideas yet. Click "+" to add one! 🌱</p>';
+                    contentContainer.appendChild(emptyState);
+                } else {
+                    const cardsContainer = document.createElement('div');
+                    cardsContainer.className = 'grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 p-4 sm:p-6';
+
+                    monthVideos.forEach(video => {
+                        cardsContainer.appendChild(createVideoCard(video));
+                    });
+
+                    contentContainer.appendChild(cardsContainer);
+                }
+
+                monthSection.appendChild(header);
+                monthSection.appendChild(contentContainer);
+                contentArea.appendChild(monthSection);
+            });
+        }
+
+        function createVideoCard(video) {
+            const card = document.createElement('div');
+            card.className = 'bg-gradient-to-b from-[#0d1b2a] to-[#0a2a2a] rounded-xl border border-green-900/30 p-4 sm:p-5 hover:shadow-lg transition glow-hover';
+            card.style.boxShadow = '0 0 20px rgba(34, 197, 94, 0.15)';
+
+            const titleEl = document.createElement('h3');
+            titleEl.className = 'font-bold text-sm sm:text-base text-green-400 card-title mb-2 line-clamp-2 glow-text';
+            titleEl.textContent = video.title;
+
+            const badgesContainer = document.createElement('div');
+            badgesContainer.className = 'flex gap-2 mb-3 flex-wrap';
+
+            const typeBadge = document.createElement('span');
+            typeBadge.className = `text-xs font-semibold px-2 py-1 rounded floating-tab ${
+                video.type === 'Long' 
+                    ? 'bg-gradient-to-r from-indigo-900/40 to-purple-900/40 text-purple-300 border border-purple-900/50' 
+                    : 'bg-gradient-to-r from-green-900/40 to-emerald-900/40 text-green-300 border border-green-900/50'
+            }`;
+            typeBadge.textContent = video.type === 'Long' ? 'Long (25s)' : 'Short (10s)';
+
+            const starContainer = document.createElement('div');
+            starContainer.className = 'flex gap-0.5 items-center';
+            for (let i = 0; i < 3; i++) {
+                const star = document.createElement('span');
+                star.className = `star ${i < video.stars ? getStarColor(video.stars) : 'empty'}`;
+                star.textContent = '★';
+                starContainer.appendChild(star);
+            }
+
+            badgesContainer.appendChild(typeBadge);
+
+            const linkButton = document.createElement('a');
+            linkButton.href = video.link || '#';
+            linkButton.target = '_blank';
+            linkButton.rel = 'noopener noreferrer';
+            linkButton.className = `text-xs font-semibold px-2 py-1 rounded floating-tab ${
+                !video.link ? 'opacity-50 cursor-not-allowed pointer-events-none' : ''
+            }`;
+            linkButton.innerHTML = '🔗';
+            badgesContainer.appendChild(linkButton);
+
+            const starsLabel = document.createElement('span');
+            starsLabel.className = 'text-xs text-green-300/70 font-medium';
+            starsLabel.innerHTML = starContainer.innerHTML + ' ' + getStarLabel(video.stars);
+
+            let driveVideoSection = null;
+            if (video.driveLink && video.driveLink.trim()) {
+                const fileId = extractGoogleDriveFileId(video.driveLink);
+                if (fileId) {
+                    driveVideoSection = document.createElement('div');
+                    driveVideoSection.className = 'mt-3 w-full';
+                    const embedUrl = `https://drive.google.com/file/d/${fileId}/preview`;
+                    driveVideoSection.innerHTML = `
+                        <iframe 
+                            src="${embedUrl}" 
+                            class="w-full rounded-lg border border-green-900/30" 
+                            style="height: 200px; min-height: 200px; box-shadow: 0 0 15px rgba(34, 197, 94, 0.2);"
+                            allow="autoplay" 
+                            allowfullscreen
+                        ></iframe>
+                    `;
+                }
+            }
+
+            const caption = document.createElement('div');
+            caption.className = 'mt-3 border-t border-green-900/30 pt-3';
+
+            const captionHeader = document.createElement('button');
+            captionHeader.className = 'w-full text-left text-xs sm:text-sm font-semibold text-green-400 flex justify-between items-center hover:text-green-300 transition';
+            captionHeader.innerHTML = '<span>Caption</span><span class="text-green-500/60">▼</span>';
+            captionHeader.onclick = (e) => toggleCollapsible(e, caption);
+
+            const captionContent = document.createElement('div');
+            captionContent.className = 'collapsible-content mt-2';
+            captionContent.innerHTML = `<p class="text-xs sm:text-sm text-green-300/70 break-words">${video.caption || 'No caption'}</p>`;
+
+            caption.appendChild(captionHeader);
+            caption.appendChild(captionContent);
+
+            const script = document.createElement('div');
+            script.className = 'mt-3 border-t border-green-900/30 pt-3';
+
+            const scriptHeader = document.createElement('button');
+            scriptHeader.className = 'w-full text-left text-xs sm:text-sm font-semibold text-green-400 flex justify-between items-center hover:text-green-300 transition';
+            scriptHeader.innerHTML = '<span>Script</span><span class="text-green-500/60">▼</span>';
+            scriptHeader.onclick = (e) => toggleCollapsible(e, script);
+
+            const scriptContent = document.createElement('div');
+            scriptContent.className = 'collapsible-content mt-2';
+            scriptContent.innerHTML = `<p class="text-xs sm:text-sm text-green-300/70 break-words whitespace-pre-wrap">${video.script || 'No script'}</p>`;
+
+            script.appendChild(scriptHeader);
+            script.appendChild(scriptContent);
+
+            card.appendChild(titleEl);
+            card.appendChild(badgesContainer);
+            card.appendChild(starsLabel);
+            if (driveVideoSection) {
+                card.appendChild(driveVideoSection);
+            }
+            card.appendChild(caption);
+            card.appendChild(script);
+
+            return card;
+        }
+
+        function toggleCollapsible(e, element) {
+            e.preventDefault();
+            e.stopPropagation();
+            const content = element.querySelector('.collapsible-content');
+            const icon = element.querySelector('span:last-child');
+
+            content.classList.toggle('open');
+            icon.textContent = content.classList.contains('open') ? '▲' : '▼';
+        }
+
+        function toggleMonth(monthDisplay, monthSection) {
+            const isExpanded = appState.expandedMonths[monthDisplay];
+            appState.expandedMonths[monthDisplay] = !isExpanded;
+
+            const content = monthSection.querySelector('.collapsible-content');
+            const icon = monthSection.querySelector('.toggle-icon');
+
+            content.classList.toggle('open');
+            icon.classList.toggle('open');
+        }
+
+        // ==================== MODAL FUNCTIONS ====================
+        function openVideoModal(monthDisplay) {
+            appState.currentFormMonth = monthDisplay;
+            document.getElementById('formMonth').value = monthDisplay;
+            document.getElementById('videoForm').reset();
+            document.getElementById('formStars').value = '1';
+            document.getElementById('formType').checked = false;
+            updateTypeLabel();
+            updateStarDescription();
+
+            document.getElementById('videoModal').classList.remove('hidden');
+            document.body.style.overflow = 'hidden';
+        }
+
+        function closeVideoModal() {
+            document.getElementById('videoModal').classList.add('hidden');
+            document.body.style.overflow = '';
+            document.getElementById('videoForm').reset();
+        }
+
+        function updateTypeLabel() {
+            const isLong = document.getElementById('formType').checked;
+            const shortLabel = document.getElementById('shortLabel');
+            const longLabel = document.getElementById('longLabel');
+
+            if (isLong) {
+                shortLabel.classList.remove('active');
+                longLabel.classList.add('active');
+            } else {
+                shortLabel.classList.add('active');
+                longLabel.classList.remove('active');
+            }
+        }
+
+        function setStarRating(rating) {
+            document.getElementById('formStars').value = rating;
+            updateStarDescription();
+        }
+
+        function updateStarDescription() {
+            const stars = parseInt(document.getElementById('formStars').value);
+            const label = getStarLabel(stars);
+            document.getElementById('starDescription').textContent = label;
+
+            document.querySelectorAll('.star-btn').forEach((btn, index) => {
+                const star = btn.querySelector('.star');
+                if (index < stars) {
+                    star.classList.remove('empty');
+                    star.className = `star ${getStarColor(stars)}`;
+                } else {
+                    star.classList.add('empty');
+                }
+            });
+        }
+
+        // ==================== FORM SUBMISSION ====================
+        document.getElementById('videoForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+
+            if (appState.isSaving) return;
+
+            appState.isSaving = true;
+            const submitBtn = document.getElementById('submitBtn');
+            const originalText = submitBtn.textContent;
+            submitBtn.textContent = 'Saving...';
+            submitBtn.disabled = true;
+
+            const newVideo = {
+                id: 'video_' + Date.now(),
+                title: document.getElementById('formTitle').value,
+                type: document.getElementById('formType').checked ? 'Long' : 'Short',
+                month: document.getElementById('formMonth').value,
+                link: document.getElementById('formLink').value,
+                driveLink: document.getElementById('formDriveLink').value,
+                caption: document.getElementById('formCaption').value,
+                script: document.getElementById('formScript').value,
+                stars: parseInt(document.getElementById('formStars').value),
+                createdAt: new Date().toISOString()
+            };
+
+            const saved = await saveVideoToAPI(newVideo);
+
+            if (saved) {
+                appState.videos.push(newVideo);
+                renderUI();
+                closeVideoModal();
+                submitBtn.textContent = originalText;
+                submitBtn.disabled = false;
+                appState.isSaving = false;
+            } else {
+                submitBtn.textContent = originalText;
+                submitBtn.disabled = false;
+                appState.isSaving = false;
+                alert('Failed to save video. Please try again.');
+            }
+        });
+
+        // ==================== ERROR HANDLING ====================
+        function showErrorState() {
+            document.getElementById('errorState').classList.remove('hidden');
+        }
+
+        function hideErrorState() {
+            document.getElementById('errorState').classList.add('hidden');
+        }
+
+        function hideLoadingPage() {
+            const loadingPage = document.getElementById('loadingPageOverlay');
+            const appShell = document.getElementById('appShell');
+            loadingPage.classList.add('zoom-out');
+            appShell.classList.add('app-visible');
+            setTimeout(() => {
+                loadingPage.style.display = 'none';
+            }, 700);
+        }
+
+        // Close modal on outside click
+        document.getElementById('videoModal').addEventListener('click', (e) => {
+            if (e.target === document.getElementById('videoModal')) {
+                closeVideoModal();
+            }
+        });
+
+        // Prevent body scroll when modal is open
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 'Escape' && !document.getElementById('videoModal').classList.contains('hidden')) {
+                closeVideoModal();
+            }
+        });
+    </script>
+</body>
+</html>
